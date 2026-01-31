@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>武俠班級經營 - 宗門啟示錄 (V5.1 快速升級修正版)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap');
+        
+        :root {
+            --bg-color: #1a1a1a;
+            --panel-bg: rgba(40, 30, 20, 0.95);
+            --border-color: #705030;
+            --text-gold: #ffd700;
+            --text-beige: #f0e0c0;
+            --text-brown: #d0b090;
+        }
+
+        body {
+            margin: 0; padding: 0; width: 100%; min-height: 100vh;
+            font-family: 'Noto Serif TC', 'SimSun', serif;
+            background-color: var(--bg-color);
+            background-image: url('https://html-classic.itch.zone/html/16280602/%E6%AD%A6%E4%BF%A0%E7%AD%94%E9%A1%8C%E5%82%B3/images/title_background_inkwash.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text-beige);
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        .pixel-border {
+            border: 3px solid var(--border-color);
+            box-shadow: 0 0 0 2px #302010, inset 0 0 0 1px #c0a070, 0 5px 15px rgba(0,0,0,0.5);
+            border-radius: 4px;
+        }
+
+        .pixel-btn {
+            background-color: #b88a5a;
+            border: 2px solid #503010;
+            color: #fff8e1;
+            padding: 8px 16px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: 3px 3px 0px 0px #403020;
+            transition: transform 0.1s;
+            text-shadow: 1px 1px 1px #302010;
+            position: relative;
+            image-rendering: pixelated;
+            white-space: nowrap;
+        }
+
+        .pixel-btn:hover { background-color: #c89a6a; transform: translate(-1px, -1px); }
+        .pixel-btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0px 0px #403020; }
+        
+        .pixel-btn.primary { background: linear-gradient(to bottom, #d44848, #9f2626); border-color: #581212; }
+        .pixel-btn.success { background: linear-gradient(to bottom, #48d46d, #269f43); border-color: #125824; }
+        .pixel-btn.info { background: linear-gradient(to bottom, #3a7bd5, #00d2ff); border-color: #005f73; }
+        .pixel-btn:disabled { filter: grayscale(1); cursor: not-allowed; opacity: 0.7; }
+
+        #app-container {
+            max-width: 1200px; margin: 0 auto; padding: 20px;
+            display: flex; flex-direction: column; height: 100vh; box-sizing: border-box;
+        }
+
+        header {
+            text-align: center; padding: 15px; background: var(--panel-bg); margin-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: center; position: relative;
+            flex-wrap: wrap; gap: 10px;
+        }
+
+        h1 { margin: 0; font-size: 2rem; color: var(--text-gold); text-shadow: 2px 2px 0 #000; letter-spacing: 2px; }
+
+        .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+        .teacher-only { display: none !important; }
+
+        input[type="text"], input[type="password"], input[type="number"] {
+            background: rgba(0,0,0,0.3); border: 2px solid var(--border-color);
+            color: var(--text-beige); padding: 8px; font-family: inherit; outline: none;
+        }
+        input:focus { border-color: var(--text-gold); background: rgba(0,0,0,0.5); }
+
+        .gender-radio { display: flex; gap: 10px; align-items: center; color: var(--text-brown); }
+        .gender-radio label { cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .gender-radio input[type="radio"] { accent-color: #b88a5a; width: 16px; height: 16px; }
+
+        .grid-container {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px; overflow-y: auto; padding-right: 10px; padding-bottom: 50px;
+        }
+
+        .student-card {
+            background-color: rgba(40, 30, 20, 0.9); padding: 15px;
+            display: flex; flex-direction: column; gap: 8px;
+            position: relative; transition: transform 0.2s;
+        }
+        .student-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); z-index: 10; }
+
+        .card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid var(--border-color); padding-bottom: 5px; margin-bottom: 5px;
+        }
+        .student-name { font-size: 1.5rem; color: var(--text-gold); font-weight: bold; text-shadow: 1px 1px 2px #000; }
+        
+        .level-badge { 
+            font-family: 'Black Ops One', cursive, sans-serif;
+            font-size: 1.8rem; 
+            color: #00d2ff; 
+            text-shadow: 0 0 5px #005f73, 2px 2px 0 #000;
+            background: rgba(0,0,0,0.5);
+            padding: 0 8px;
+            border-radius: 4px;
+            border: 1px solid #005f73;
+        }
+
+        .avatar-area {
+            display: flex; justify-content: center; align-items: flex-end;
+            margin: 5px 0; height: 180px; overflow: hidden; position: relative;
+            background: radial-gradient(circle at bottom, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0) 70%);
+            border-radius: 4px; border: 1px solid rgba(112, 80, 48, 0.5);
+        }
+        .avatar-img {
+            height: 95%; width: auto; object-fit: contain; image-rendering: pixelated;
+            filter: drop-shadow(0 0 8px rgba(0,0,0,0.7)); transition: filter 0.3s;
+            z-index: 2;
+        }
+        
+        .companion-img {
+            position: absolute; width: auto; object-fit: contain; image-rendering: pixelated;
+            z-index: 3; filter: drop-shadow(0 0 5px rgba(0,0,0,0.8));
+        }
+        .companion-pet { 
+            height: 60px; bottom: 10px; left: 5px; 
+            animation: float 3s ease-in-out infinite; 
+        }
+        .companion-sword { 
+            height: 80px; top: 10px; right: 5px; transform: rotate(-20deg); 
+            animation: floatSword 4s ease-in-out infinite; 
+        }
+
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @keyframes floatSword { 0%, 100% { transform: translateY(0) rotate(-20deg); } 50% { transform: translateY(-8px) rotate(-25deg); } }
+
+        .stat-row { display: flex; align-items: center; font-size: 0.9rem; gap: 5px; }
+        .stat-label { width: 45px; color: var(--text-brown); text-align: right; }
+        .bar-container {
+            flex-grow: 1; height: 16px; background: #2a2015;
+            border: 1px solid #503010; border-radius: 8px; overflow: hidden; position: relative;
+        }
+        .bar-fill { height: 100%; transition: width 0.5s ease; }
+        .bar-exp { 
+            background: linear-gradient(to right, #4facfe, #00f2fe); 
+            box-shadow: 0 0 10px #00f2fe;
+        }
+        .stat-value { font-size: 0.8rem; color: #fff; margin-left: 5px; min-width: 80px; text-align: right; font-family: monospace;}
+
+        .card-actions {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px;
+        }
+        .common-actions {
+            display: grid; grid-template-columns: 1fr; gap: 5px; margin-top: 5px;
+        }
+        .action-btn-small { padding: 4px; font-size: 0.8rem; }
+        
+        .card-edit-btn {
+            position: absolute; top: 5px; right: 5px; background: none; border: none;
+            color: #d0b090; cursor: pointer; font-size: 1.2rem; opacity: 0.6; z-index: 5;
+        }
+        .card-edit-btn:hover { opacity: 1; color: #fff; }
+
+        /* Inventory Modal Styles */
+        .inventory-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px;
+            max-height: 300px; overflow-y: auto; padding: 10px;
+        }
+        .inventory-item {
+            width: 60px; height: 60px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color);
+            border-radius: 4px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; position: relative;
+        }
+        .inventory-item:hover { background: rgba(255,255,255,0.1); border-color: var(--text-gold); }
+        .inventory-item img { width: 48px; height: 48px; image-rendering: pixelated; }
+        .inventory-item.equipped { border: 2px solid #48d46d; box-shadow: 0 0 5px #48d46d; }
+        .item-tooltip {
+            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.9); color: #fff; padding: 5px; border-radius: 4px;
+            font-size: 0.8rem; white-space: nowrap; display: none; z-index: 20; pointer-events: none;
+        }
+        .inventory-item:hover .item-tooltip { display: block; }
+
+        #battle-modal, #system-modal, #inventory-modal, #edit-student-modal, #batch-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 1000;
+            justify-content: center; align-items: center; flex-direction: column;
+        }
+        #system-modal, #edit-student-modal, #batch-modal { z-index: 2000; }
+
+        #battle-stage {
+            width: 800px; height: 500px;
+            background-size: cover; position: relative;
+            border: 4px solid #302010; box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            display: flex; flex-direction: column; justify-content: space-between; padding: 20px;
+            transition: background-image 0.5s ease;
+        }
+        .battle-top { display: flex; justify-content: space-between; align-items: flex-end; height: 60%; padding: 0 50px; }
+        .fighter { display: flex; flex-direction: column; align-items: center; position: relative; }
+        .fighter img {
+            height: 180px; image-rendering: pixelated;
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); transition: transform 0.2s;
+        }
+        .fighter-name {
+            background: rgba(0,0,0,0.7); color: var(--text-gold); padding: 2px 8px;
+            border-radius: 4px; margin-bottom: 5px; border: 1px solid var(--border-color);
+        }
+        #battle-ui {
+            background: rgba(40,30,20,0.95); border: 2px solid var(--border-color);
+            padding: 15px; text-align: center; height: 30%;
+            display: flex; flex-direction: column; justify-content: center; gap: 15px;
+        }
+        #battle-msg { font-size: 1.5rem; color: var(--text-beige); margin: 0; }
+        .battle-controls { display: flex; justify-content: center; gap: 20px; }
+
+        @keyframes shake { 0% { transform: translate(0, 0); } 25% { transform: translate(-5px, 0); } 75% { transform: translate(5px, 0); } 100% { transform: translate(0, 0); } }
+        .shake-effect { animation: shake 0.3s ease-in-out; }
+        @keyframes levelUpFloat { 0% { transform: translateY(0) scale(0.5); opacity: 0; } 50% { transform: translateY(-20px) scale(1.2); opacity: 1; } 100% { transform: translateY(-50px) scale(1); opacity: 0; } }
+        .float-text {
+            position: absolute; color: gold; font-weight: bold; font-size: 1.5rem; text-shadow: 0 0 5px #000;
+            pointer-events: none; animation: levelUpFloat 1.5s forwards; z-index: 100;
+        }
+        #level-up-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; display: none; z-index: 9999;
+            background: rgba(255, 215, 0, 0.1); justify-content: center; align-items: center;
+        }
+        #level-up-img { width: 300px; animation: levelUpZoom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes levelUpZoom { from { transform: scale(0); } to { transform: scale(1); } }
+        #notification-bar {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(20, 10, 5, 0.9); border: 2px solid var(--text-gold);
+            padding: 10px 30px; border-radius: 20px; color: var(--text-gold);
+            font-size: 1.2rem; opacity: 0; transition: opacity 0.5s; pointer-events: none; z-index: 3000;
+        }
+        
+        #item-get-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; z-index: 9998;
+            background: rgba(0,0,0,0.8); justify-content: center; align-items: center; flex-direction: column;
+        }
+        .item-card-anim {
+            background: rgba(40,30,20,0.95); border: 3px solid var(--text-gold);
+            padding: 30px; text-align: center; border-radius: 10px;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <header class="pixel-border">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <img id="header-icon" src="" width="40" alt="Icon">
+            <h1>宗門名錄</h1>
+        </div>
+        <div class="controls">
+            <button class="pixel-btn" id="musicBtn" onclick="toggleMusic()">🔇 音樂</button>
+            <button class="pixel-btn" onclick="openBattleModal()">⚔️ 隨機歷練 (抽籤)</button>
+            <div style="width: 20px;"></div>
+            
+            <button id="loginBtn" class="pixel-btn" onclick="toggleTeacherMode()">🔑 師尊登入</button>
+
+            <!-- 老師控制項 -->
+            <div class="teacher-only teacher-controls-header" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <input type="text" id="newStudentName" placeholder="輸入弟子名號" style="width:100px;">
+                <div class="gender-radio">
+                    <label><input type="radio" name="newStudentGender" value="male" checked>男</label>
+                    <label><input type="radio" name="newStudentGender" value="female">女</label>
+                </div>
+                <button class="pixel-btn success" onclick="addStudent()">招收弟子</button>
+                <button class="pixel-btn info" onclick="openBatchModal()">📚 批量生成</button>
+                <button class="pixel-btn" onclick="saveData()">💾 存檔</button>
+                <button class="pixel-btn" style="background:#581212;" onclick="resetAll()">💀 重置</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="grid-container" id="studentGrid">
+        <!-- 學生卡片 -->
+    </div>
+</div>
+
+<!-- 戰鬥模態框 -->
+<div id="battle-modal">
+    <div id="battle-stage" class="pixel-border">
+        <div class="battle-top">
+            <div class="fighter" id="fighter-student" style="opacity: 0; transition: opacity 0.5s;">
+                <div class="fighter-name" id="battle-student-name">弟子</div>
+                <img id="battle-student-img" src="" alt="Student">
+            </div>
+            <div class="fighter">
+                <div class="fighter-name" id="battle-monster-name">妖獸</div>
+                <img id="battle-monster-img" src="" alt="Monster">
+            </div>
+        </div>
+        <div id="battle-ui" class="pixel-border">
+            <p id="battle-msg">遭遇了野生妖獸！</p>
+            <div class="battle-controls" id="battle-controls-start">
+                <button class="pixel-btn primary" style="font-size: 1.2rem; padding: 10px 30px;" onclick="pickRandomStudent()">🎲 隨機點名迎戰</button>
+                <button class="pixel-btn" onclick="closeBattleModal()">逃跑 (關閉)</button>
+            </div>
+            <div class="battle-controls" id="battle-controls-judge" style="display: none;">
+                <div class="teacher-controls-flex" style="display: flex; gap: 20px;">
+                    <button class="pixel-btn success" onclick="resolveBattle(true)">✅ 回答正確 (斬殺)</button>
+                    <button class="pixel-btn primary" onclick="resolveBattle(false)">❌ 回答錯誤 (受傷)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 行囊模態框 -->
+<div id="inventory-modal">
+    <div class="pixel-border" style="background:var(--panel-bg); padding:20px; width:400px; max-height:80vh; display:flex; flex-direction:column; gap:15px;">
+        <h3 id="inv-modal-title" style="margin:0; color:var(--text-gold); text-align:center;">弟子的行囊</h3>
+        <p style="text-align:center; color:#aaa; font-size:0.8rem; margin:0;">(點擊穿戴/卸下，同類物品只能裝備一件)</p>
+        <div id="inv-container" class="inventory-grid"></div>
+        <button class="pixel-btn" onclick="document.getElementById('inventory-modal').style.display='none'">關閉</button>
+    </div>
+</div>
+
+<!-- 批量生成模態框 -->
+<div id="batch-modal">
+    <div class="pixel-border" style="background:var(--panel-bg); padding:20px; width:300px; text-align:center; display:flex; flex-direction:column; gap:15px;">
+        <h3 style="margin:0; color:var(--text-gold);">批量生成班級</h3>
+        <p style="color:var(--text-beige); margin:0;">請輸入班級人數 (將生成 1號~N號)</p>
+        <input type="number" id="batch-count" min="1" max="100" value="30" style="text-align:center;">
+        <div style="display:flex; justify-content:center; gap:10px;">
+            <button class="pixel-btn" onclick="document.getElementById('batch-modal').style.display='none'">取消</button>
+            <button class="pixel-btn success" onclick="confirmBatchAdd()">生成</button>
+        </div>
+    </div>
+</div>
+
+<!-- 編輯學生模態框 -->
+<div id="edit-student-modal">
+    <div class="pixel-border" style="background:var(--panel-bg); padding:20px; width:300px; display:flex; flex-direction:column; gap:15px;">
+        <h3 style="margin:0; color:var(--text-gold); text-align:center;">編輯弟子資料</h3>
+        <input type="hidden" id="edit-id">
+        <div>
+            <label style="color:var(--text-brown);">名號:</label>
+            <input type="text" id="edit-name" style="width:100%; margin-top:5px;">
+        </div>
+        <div>
+            <label style="color:var(--text-brown);">性別:</label>
+            <div class="gender-radio" style="margin-top:5px;">
+                <label><input type="radio" name="editGender" value="male">少俠 (男)</label>
+                <label><input type="radio" name="editGender" value="female">女俠 (女)</label>
+            </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:10px;">
+            <button class="pixel-btn" style="background:#581212;" onclick="confirmDeleteStudent()">🗑️ 逐出</button>
+            <div>
+                <button class="pixel-btn" onclick="document.getElementById('edit-student-modal').style.display='none'">取消</button>
+                <button class="pixel-btn success" onclick="saveStudentEdit()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 獲得道具提示 -->
+<div id="item-get-overlay">
+    <div class="item-card-anim">
+        <h2 style="color:var(--text-gold); margin:0 0 10px 0;">✨ 機緣已到 ✨</h2>
+        <img id="item-get-img" src="" style="width:100px; height:100px; image-rendering:pixelated; border:2px solid #fff; border-radius:5px; background:rgba(0,0,0,0.5);">
+        <p id="item-get-name" style="color:var(--text-beige); font-size:1.5rem; margin:10px 0;">獲得 神獸！</p>
+        <p id="item-get-desc" style="color:var(--text-brown); font-size:1rem; margin:0;">成功收服了妖獸！</p>
+        <br>
+        <button class="pixel-btn success" onclick="document.getElementById('item-get-overlay').style.display='none'">收下</button>
+    </div>
+</div>
+
+<!-- 系統提示模態框 -->
+<div id="system-modal">
+    <div class="pixel-border" style="background:var(--panel-bg); padding:20px; width:300px; text-align:center; display:flex; flex-direction:column; gap:15px;">
+        <h3 id="modal-title" style="margin:0; color:var(--text-gold);">提示</h3>
+        <p id="modal-msg" style="margin:0; color:var(--text-beige);"></p>
+        <div id="modal-input-container" style="display:none;">
+            <input type="text" id="modal-input" style="width:90%; font-size:1.1rem; text-align:center; padding: 5px;">
+        </div>
+        <div style="display:flex; justify-content:center; gap:10px; margin-top:5px;">
+            <button id="modal-cancel-btn" class="pixel-btn" style="display:none;">取消</button>
+            <button id="modal-confirm-btn" class="pixel-btn success">確定</button>
+        </div>
+    </div>
+</div>
+
+<div id="level-up-overlay"><img id="level-up-img" src="" alt="Level Up"></div>
+<div id="notification-bar">系統提示</div>
+
+<script>
+    // 設置資源基底 URL
+    const BASE_URL = "https://html-classic.itch.zone/html/16280602/%E6%AD%A6%E4%BF%A0%E7%AD%94%E9%A1%8C%E5%82%B3/";
+    
+    // 初始化圖片連結
+    document.body.style.backgroundImage = `url('${BASE_URL}images/title_background_inkwash.jpg')`;
+    document.getElementById('header-icon').src = BASE_URL + "images/ui/icon_shop_pixel.png";
+    document.getElementById('level-up-img').src = BASE_URL + "images/effects/effect_levelup_animation.gif";
+    
+    // 初始化音效
+    const sfxClick = new Audio(BASE_URL + 'audio/sfx_button_click.mp3');
+    const sfxLevelUp = new Audio(BASE_URL + 'audio/sfx_level_up.mp3');
+    const sfxWin = new Audio(BASE_URL + 'audio/sfx_battle_win.mp3');
+    const sfxAttack = new Audio(BASE_URL + 'audio/sfx_player_attack.mp3');
+    const sfxGetItem = new Audio(BASE_URL + 'audio/sfx_buy_item.mp3'); 
+    
+    // 背景音樂
+    const bgmMain = new Audio(BASE_URL + 'audio/bgm_main_game.mp3');
+    bgmMain.loop = true; bgmMain.volume = 0.3;
+    const bgmBattle = new Audio(BASE_URL + 'audio/bgm_battle.mp3');
+    bgmBattle.loop = true; bgmBattle.volume = 0.3;
+
+    let isMusicEnabled = false;
+
+    function playSfx(audio) { try { audio.currentTime = 0; audio.play().catch(() => {}); } catch(e) {} }
+
+    function toggleMusic() {
+        isMusicEnabled = !isMusicEnabled;
+        const btn = document.getElementById('musicBtn');
+        if (isMusicEnabled) {
+            btn.innerText = "🎵 音樂";
+            playBGM('main');
+        } else {
+            btn.innerText = "🔇 音樂";
+            stopBGM();
+        }
+    }
+
+    function playBGM(type) {
+        if (!isMusicEnabled) return;
+        bgmMain.pause();
+        bgmBattle.pause();
+        try {
+            if (type === 'main') bgmMain.play().catch(()=>{});
+            else if (type === 'battle') { bgmBattle.currentTime = 0; bgmBattle.play().catch(()=>{}); }
+        } catch(e) {}
+    }
+
+    function stopBGM() { bgmMain.pause(); bgmBattle.pause(); }
+
+    document.addEventListener('click', () => {
+        if (isMusicEnabled && bgmMain.paused && bgmBattle.paused && document.getElementById('battle-modal').style.display === 'none') {
+            playBGM('main');
+        }
+    }, {once:true});
+
+    // 常用 Modal 函數
+    function showCustomModal({ title, msg, hasInput = false, isPassword = false, showCancel = false, onConfirm }) {
+        const modal = document.getElementById('system-modal');
+        document.getElementById('modal-title').innerText = title || "提示";
+        document.getElementById('modal-msg').innerText = msg || "";
+        const inputContainer = document.getElementById('modal-input-container');
+        const input = document.getElementById('modal-input');
+        
+        if (hasInput) {
+            inputContainer.style.display = 'block'; input.value = ''; input.type = isPassword ? 'password' : 'text';
+            setTimeout(() => input.focus(), 100);
+        } else { inputContainer.style.display = 'none'; }
+
+        const cancelBtn = document.getElementById('modal-cancel-btn');
+        cancelBtn.style.display = showCancel ? 'block' : 'none';
+        cancelBtn.onclick = () => modal.style.display = 'none';
+
+        const confirmBtn = document.getElementById('modal-confirm-btn');
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        
+        newConfirmBtn.onclick = () => {
+            modal.style.display = 'none';
+            if (onConfirm) onConfirm(hasInput ? input.value : true);
+        };
+        if (hasInput) input.onkeydown = (e) => { if (e.key === 'Enter') newConfirmBtn.click(); };
+        modal.style.display = 'flex';
+    }
+
+    // 戰鬥背景列表
+    const BATTLE_BG = [
+        BASE_URL + "images/backgrounds/battle_pixel_background.jpg",
+        BASE_URL + "images/backgrounds/battle_forest_pixel.jpg",
+        BASE_URL + "images/backgrounds/battle_cave_pixel.jpg",
+        BASE_URL + "images/backgrounds/battle_volcano_pixel.jpg",
+        BASE_URL + "images/backgrounds/battle_ruins_pixel.jpg",
+        BASE_URL + "images/backgrounds/battle_frozen_peak_pixel.jpg"
+    ];
+
+    // 基礎道具庫 (武器)
+    const WEAPONS = {
+        'sword_fire': { name: "炎陽劍", type: 'sword', src: BASE_URL + "images/swords/sword_fire_sprite.png", icon: BASE_URL + "images/swords/sword_fire_icon.png" },
+        'sword_wood': { name: "青木劍", type: 'sword', src: BASE_URL + "images/swords/sword_wood_sprite.png", icon: BASE_URL + "images/swords/sword_wood_icon.png" },
+        'sword_gold': { name: "銳金劍", type: 'sword', src: BASE_URL + "images/swords/sword_gold_sprite.png", icon: BASE_URL + "images/swords/sword_gold_icon.png" },
+        'sword_ice': { name: "冰晶劍", type: 'sword', src: BASE_URL + "images/swords/sword_ice_sprite.png", icon: BASE_URL + "images/swords/sword_ice_icon.png" },
+        'sword_light': { name: "晨曦劍", type: 'sword', src: BASE_URL + "images/swords/sword_light_sprite.png", icon: BASE_URL + "images/swords/sword_light_icon.png" }
+    };
+
+    // 角色圖 (一般狀態)
+    const PLAYER_ARTS = [
+        BASE_URL + "images/characters/player/full/player_art_1-10.png",
+        BASE_URL + "images/characters/player/full/player_art_11-20.png",
+        BASE_URL + "images/characters/player/full/player_art_21-30.png",
+        BASE_URL + "images/characters/player/full/player_art_31-40.png"
+    ];
+
+    // 角色圖 (戰鬥狀態)
+    const PLAYER_BATTLE_ARTS = [
+        BASE_URL + "images/characters/player/battle/player_battle_1-10.png",
+        BASE_URL + "images/characters/player/battle/player_battle_11-20.png",
+        BASE_URL + "images/characters/player/battle/player_battle_21-30.png",
+        BASE_URL + "images/characters/player/battle/player_battle_31-40.png"
+    ];
+    
+    // 怪物資料
+    const MONSTERS = [
+        { id: 'wolf', name: "幼狼妖", src: BASE_URL + "images/monsters/wolf_cub.gif", icon: BASE_URL + "images/monsters/wolf_cub.gif" },
+        { id: 'snake', name: "小竹葉青", src: BASE_URL + "images/monsters/snakelet_bamboo.gif", icon: BASE_URL + "images/monsters/snakelet_bamboo.gif" },
+        { id: 'boar', name: "發怒野豬", src: BASE_URL + "images/monsters/boar_angry.gif", icon: BASE_URL + "images/monsters/boar_angry.gif" },
+        { id: 'golem', name: "石偶", src: BASE_URL + "images/monsters/stone_golem.gif", icon: BASE_URL + "images/monsters/stone_golem.gif" },
+        { id: 'imp', name: "詭影小妖", src: BASE_URL + "images/monsters/shadow_imp.gif", icon: BASE_URL + "images/monsters/shadow_imp.gif" },
+        { id: 'eye', name: "浮空魔眼", src: BASE_URL + "images/monsters/flying_eye.gif", icon: BASE_URL + "images/monsters/flying_eye.gif" }
+    ];
+
+    let students = JSON.parse(localStorage.getItem('wuxia_class_data')) || [];
+    let currentBattleStudentIndex = -1;
+    let currentMonster = null;
+    let isTeacherMode = false;
+
+    window.onload = () => { renderGrid(); updateTeacherUI(); };
+
+    // 性別路徑處理函數
+    function getAvatarPath(path, gender) {
+        if (gender === 'female') {
+            return path.replace('.png', '_girl.png').replace('.gif', '_girl.gif');
+        }
+        return path;
+    }
+
+    // --- 等級與經驗值系統 (V5.1 難度調整: 大幅降低) ---
+    // 公式：等級 = sqrt(exp / 10) + 1  (原為 / 30)
+    // 升級速度提升 3 倍
+    function calculateLevel(exp) {
+        if (exp <= 0) return 1;
+        return Math.floor(Math.sqrt(exp / 10)) + 1;
+    }
+
+    function getExpForLevel(level) {
+        return 10 * Math.pow(level, 2); 
+    }
+
+    function getStudentInfo(s) {
+        const currentLevel = calculateLevel(s.exp);
+        const nextLevelExp = getExpForLevel(currentLevel);
+        const prevLevelExp = getExpForLevel(currentLevel - 1);
+        
+        let range = nextLevelExp - prevLevelExp;
+        let progress = s.exp - prevLevelExp;
+        let pct = Math.min(100, Math.max(0, (progress / range) * 100));
+
+        let artIndex = 0;
+        if (currentLevel < 25) artIndex = 0;
+        else if (currentLevel < 50) artIndex = 1;
+        else if (currentLevel < 75) artIndex = 2;
+        else artIndex = 3;
+
+        let gender = s.gender || 'male';
+        let avatar = getAvatarPath(PLAYER_ARTS[artIndex], gender);
+        let battleAvatar = getAvatarPath(PLAYER_BATTLE_ARTS[artIndex], gender);
+
+        return {
+            level: currentLevel,
+            avatar: avatar,
+            battleAvatar: battleAvatar,
+            expText: `${s.exp} / ${nextLevelExp}`,
+            pct: pct
+        };
+    }
+
+    function updateExp(index, amount) {
+        playSfx(sfxClick);
+        const s = students[index]; 
+        const oldLvl = calculateLevel(s.exp);
+        s.exp = Math.max(0, s.exp + amount);
+        const newLvl = calculateLevel(s.exp);
+        
+        showFloatText(amount > 0 ? `+${amount} Exp` : `${amount}`, index);
+        
+        if (newLvl > oldLvl) { 
+            playSfx(sfxLevelUp); 
+            showLevelUpEffect(); 
+            showNotify(`恭喜 ${s.name} 升到了 Lv.${newLvl}！`); 
+        }
+        saveData(); renderGrid();
+    }
+
+    function toggleTeacherMode() {
+        if (!isTeacherMode) {
+            showCustomModal({
+                title: "師尊驗證", msg: "請輸入師尊口令 (預設: admin)", hasInput: true, isPassword: true, showCancel: true,
+                onConfirm: (val) => {
+                    if (val === "admin") {
+                        isTeacherMode = true; document.getElementById('loginBtn').innerText = "🔓 師尊登出";
+                        showNotify("師尊降臨，權限已解鎖！"); updateTeacherUI();
+                    } else { showNotify("口令錯誤！"); }
+                }
+            });
+        } else {
+            isTeacherMode = false; document.getElementById('loginBtn').innerText = "🔑 師尊登入";
+            showNotify("已切換回弟子視角。"); updateTeacherUI();
+        }
+    }
+
+    function updateTeacherUI() {
+        const teacherElements = document.querySelectorAll('.teacher-only');
+        teacherElements.forEach(el => {
+            if (isTeacherMode) {
+                if (el.classList.contains('card-actions')) { el.style.setProperty('display', 'grid', 'important'); }
+                else if (el.classList.contains('teacher-controls-header')) { el.style.setProperty('display', 'flex', 'important'); }
+                else { el.style.setProperty('display', 'block', 'important'); }
+            } else { el.style.setProperty('display', 'none', 'important'); }
+        });
+    }
+
+    // --- 學生管理 ---
+
+    function addStudent() {
+        const input = document.getElementById('newStudentName');
+        const name = input.value.trim();
+        const genderRadios = document.getElementsByName('newStudentGender');
+        let gender = 'male';
+        for(let r of genderRadios) if(r.checked) gender = r.value;
+
+        if(!name) return;
+        playSfx(sfxClick);
+        students.push({ id: Date.now(), name: name, gender: gender, exp: 0, inventory: [], equipped: {} });
+        input.value = '';
+        saveData(); renderGrid(); showNotify(`歡迎 ${name} 加入宗門！`);
+    }
+
+    function openBatchModal() { document.getElementById('batch-modal').style.display = 'flex'; }
+
+    function confirmBatchAdd() {
+        const count = parseInt(document.getElementById('batch-count').value);
+        if (count > 0 && count <= 100) {
+            playSfx(sfxClick);
+            for (let i = 1; i <= count; i++) {
+                const name = i + "號";
+                const exists = students.some(s => s.name === name);
+                if (!exists) {
+                    students.push({ id: Date.now() + i, name: name, gender: 'male', exp: 0, inventory: [], equipped: {} });
+                }
+            }
+            saveData(); renderGrid(); showNotify(`已生成 ${count} 位弟子名錄！`);
+            document.getElementById('batch-modal').style.display = 'none';
+        } else { showNotify("請輸入 1~100 之間的人數。"); }
+    }
+
+    function openEditModal(id) {
+        const s = students.find(st => st.id === id);
+        if (!s) return;
+        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-name').value = s.name;
+        const genderRadios = document.getElementsByName('editGender');
+        for(let r of genderRadios) r.checked = (r.value === (s.gender || 'male'));
+        document.getElementById('edit-student-modal').style.display = 'flex';
+    }
+
+    function saveStudentEdit() {
+        const id = parseInt(document.getElementById('edit-id').value);
+        const newName = document.getElementById('edit-name').value.trim();
+        const genderRadios = document.getElementsByName('editGender');
+        let newGender = 'male';
+        for(let r of genderRadios) if(r.checked) newGender = r.value;
+
+        const s = students.find(st => st.id === id);
+        if (s && newName) {
+            s.name = newName; s.gender = newGender;
+            saveData(); renderGrid();
+            document.getElementById('edit-student-modal').style.display = 'none';
+            showNotify("弟子資料已更新！");
+        }
+    }
+
+    function confirmDeleteStudent() {
+        if(confirm("確定要逐出此弟子？")) {
+            const id = parseInt(document.getElementById('edit-id').value);
+            students = students.filter(s => s.id !== id);
+            saveData(); renderGrid();
+            document.getElementById('edit-student-modal').style.display = 'none';
+            showNotify("弟子已離開宗門。");
+        }
+    }
+
+    function renderGrid() {
+        const grid = document.getElementById('studentGrid'); grid.innerHTML = '';
+        students.forEach((s, index) => {
+            const info = getStudentInfo(s);
+            
+            let companionHtml = '';
+            if (s.equipped && s.equipped.pet) {
+                let petSrc = "";
+                if (s.equipped.pet.startsWith("tamed_")) {
+                    const monsterType = s.equipped.pet.split('_')[1]; 
+                    const monsterData = MONSTERS.find(m => m.id === monsterType);
+                    if(monsterData) petSrc = monsterData.src;
+                } else if (WEAPONS[s.equipped.pet]) { 
+                }
+                if(petSrc) companionHtml += `<img src="${petSrc}" class="companion-img companion-pet">`;
+            }
+            if (s.equipped && s.equipped.sword && WEAPONS[s.equipped.sword]) {
+                companionHtml += `<img src="${WEAPONS[s.equipped.sword].src}" class="companion-img companion-sword">`;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'student-card pixel-border'; card.id = `card-${index}`;
+            card.innerHTML = `
+                <button class="card-edit-btn teacher-only" onclick="openEditModal(${s.id})">⚙️</button>
+                <div class="card-header">
+                    <div class="student-name">${s.name}</div>
+                    <div class="level-badge">Lv.${info.level}</div>
+                </div>
+                <div class="avatar-area">
+                    <img src="${info.avatar}" class="avatar-img" onerror="this.src='${PLAYER_ARTS[0]}'">
+                    ${companionHtml}
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">修為</span>
+                    <div class="bar-container"><div class="bar-fill bar-exp" style="width: ${info.pct}%"></div></div>
+                    <span class="stat-value">${info.expText}</span>
+                </div>
+                <div class="common-actions">
+                    <button class="pixel-btn info action-btn-small" onclick="openInventory(${index})">🎒 行囊</button>
+                </div>
+                <div class="card-actions teacher-only">
+                    <button class="pixel-btn action-btn-small" onclick="updateExp(${index}, 30)">+30 表現</button>
+                    <button class="pixel-btn action-btn-small" onclick="updateExp(${index}, 100)">+100 優秀</button>
+                    <button class="pixel-btn action-btn-small" style="color:#ff6b6b; border-color:#581212" onclick="updateExp(${index}, -30)">-30 扣分</button>
+                    <button class="pixel-btn action-btn-small success" onclick="updateExp(${index}, 300)">+300 奇遇</button>
+                </div>`;
+            grid.appendChild(card);
+        });
+        updateTeacherUI();
+    }
+
+    let currentInvStudentIndex = -1;
+    function openInventory(index) {
+        currentInvStudentIndex = index;
+        const s = students[index];
+        const modal = document.getElementById('inventory-modal');
+        document.getElementById('inv-modal-title').innerText = `${s.name} 的行囊`;
+        const container = document.getElementById('inv-container');
+        container.innerHTML = '';
+
+        if (!s.inventory || s.inventory.length === 0) {
+            container.innerHTML = '<p style="color:#aaa; text-align:center; width:100%;">行囊空空如也...</p>';
+        } else {
+            s.inventory.forEach(itemId => {
+                let itemData = null;
+                if (WEAPONS[itemId]) {
+                    itemData = WEAPONS[itemId];
+                } else if (itemId.startsWith("tamed_")) {
+                    const monsterType = itemId.split('_')[1];
+                    const monsterBase = MONSTERS.find(m => m.id === monsterType);
+                    if (monsterBase) {
+                        itemData = { name: "馴服的" + monsterBase.name, type: 'pet', icon: monsterBase.icon };
+                    }
+                }
+
+                if (itemData) {
+                    const isEquipped = (s.equipped && (s.equipped.pet === itemId || s.equipped.sword === itemId));
+                    const div = document.createElement('div');
+                    div.className = `inventory-item ${isEquipped ? 'equipped' : ''}`;
+                    div.innerHTML = `<img src="${itemData.icon}"><div class="item-tooltip">${itemData.name}</div>`;
+                    div.onclick = () => toggleEquip(index, itemId, itemData.type);
+                    container.appendChild(div);
+                }
+            });
+        }
+        modal.style.display = 'flex';
+    }
+
+    function toggleEquip(studentIndex, itemId, type) {
+        const s = students[studentIndex];
+        if (!s.equipped) s.equipped = {};
+
+        if (type === 'pet') {
+            s.equipped.pet = (s.equipped.pet === itemId) ? null : itemId;
+        } else if (type === 'sword') {
+            s.equipped.sword = (s.equipped.sword === itemId) ? null : itemId;
+        }
+        saveData();
+        renderGrid();
+        openInventory(studentIndex); 
+    }
+
+    function openBattleModal() {
+        if(students.length === 0) { showNotify("宗門無人，無法歷練！"); return; }
+        playSfx(sfxClick); 
+        playBGM('battle'); 
+        
+        const bgUrl = BATTLE_BG[Math.floor(Math.random() * BATTLE_BG.length)];
+        document.getElementById('battle-stage').style.backgroundImage = `url('${bgUrl}')`;
+
+        const modal = document.getElementById('battle-modal');
+        currentMonster = MONSTERS[Math.floor(Math.random() * MONSTERS.length)];
+        
+        const monsterImg = document.getElementById('battle-monster-img');
+        monsterImg.src = currentMonster.src;
+        monsterImg.onerror = function() { this.src = MONSTERS[0].src; }; 
+
+        document.getElementById('battle-monster-name').innerText = currentMonster.name;
+        document.getElementById('fighter-student').style.opacity = '0';
+        document.getElementById('battle-controls-start').style.display = 'flex';
+        document.getElementById('battle-controls-judge').style.display = 'none';
+        document.getElementById('battle-msg').innerText = `遭遇了野生 ${currentMonster.name}！`;
+        modal.style.display = 'flex';
+    }
+
+    function closeBattleModal() { 
+        playSfx(sfxClick); 
+        playBGM('main'); 
+        document.getElementById('battle-modal').style.display = 'none'; 
+    }
+
+    function pickRandomStudent() {
+        playSfx(sfxClick); 
+        document.getElementById('battle-controls-start').style.display = 'none'; 
+        document.getElementById('battle-msg').innerText = "正在感應天道 (抽籤中)...";
+        
+        let count = 0; 
+        const interval = setInterval(() => {
+            const randomIdx = Math.floor(Math.random() * students.length);
+            const s = students[randomIdx]; const info = getStudentInfo(s);
+            
+            // 使用戰鬥專用立繪
+            document.getElementById('battle-student-name').innerText = s.name;
+            document.getElementById('battle-student-img').src = info.battleAvatar;
+            document.getElementById('fighter-student').style.opacity = '1';
+            
+            count++; if(count > 15) { clearInterval(interval); currentBattleStudentIndex = randomIdx; finalizePick(s); }
+        }, 100);
+    }
+
+    function finalizePick(student) {
+        document.getElementById('battle-msg').innerText = `${student.name} 挺身而出！請回答問題！`;
+        document.getElementById('battle-controls-judge').style.display = 'block';
+        playSfx(sfxLevelUp);
+    }
+
+    function resolveBattle(isWin) {
+        if(currentBattleStudentIndex === -1) return;
+        const monsterImg = document.getElementById('battle-monster-img');
+        const studentImg = document.getElementById('battle-student-img');
+
+        if(isWin) {
+            playSfx(sfxWin); 
+            monsterImg.classList.add('shake-effect');
+            document.getElementById('battle-msg').innerText = "回答正確！獲得 50 點修為！";
+            updateExp(currentBattleStudentIndex, 50);
+            
+            if (Math.random() < 0.15 && currentMonster) {
+                setTimeout(() => {
+                    giveTamedPet(currentBattleStudentIndex, currentMonster);
+                }, 1000);
+            } 
+            else {
+                checkWeaponDrop(currentBattleStudentIndex);
+            }
+
+            setTimeout(() => { monsterImg.style.opacity = '0'; setTimeout(closeBattleModal, 1500); }, 500);
+        } else {
+            playSfx(sfxAttack); 
+            studentImg.classList.add('shake-effect');
+            document.getElementById('battle-msg').innerText = "回答錯誤！受到傷害！(僅扣除面子，不扣修為)";
+            setTimeout(closeBattleModal, 1500);
+        }
+        document.getElementById('battle-controls-judge').style.display = 'none';
+    }
+
+    function giveTamedPet(studentIndex, monster) {
+        const s = students[studentIndex];
+        if (!s.inventory) s.inventory = [];
+        
+        const petId = `tamed_${monster.id}_${Date.now()}`;
+        s.inventory.push(petId);
+        saveData();
+
+        const overlay = document.getElementById('item-get-overlay');
+        document.getElementById('item-get-img').src = monster.icon;
+        document.getElementById('item-get-name').innerText = `收服了 ${monster.name}！`;
+        document.getElementById('item-get-desc').innerText = "牠現在是你的夥伴了！";
+        overlay.style.display = 'flex';
+        playSfx(sfxGetItem);
+    }
+
+    function checkWeaponDrop(studentIndex) {
+        if (Math.random() < 0.05) {
+            const keys = Object.keys(WEAPONS);
+            const randomItemKey = keys[Math.floor(Math.random() * keys.length)];
+            const s = students[studentIndex];
+            
+            if (!s.inventory) s.inventory = [];
+            if (!s.inventory.includes(randomItemKey)) {
+                s.inventory.push(randomItemKey);
+                saveData();
+                
+                const item = WEAPONS[randomItemKey];
+                const overlay = document.getElementById('item-get-overlay');
+                document.getElementById('item-get-img').src = item.icon;
+                document.getElementById('item-get-name').innerText = `獲得神兵：${item.name}！`;
+                document.getElementById('item-get-desc').innerText = "戰力大增！";
+                overlay.style.display = 'flex';
+                playSfx(sfxGetItem);
+            }
+        }
+    }
+
+    function showFloatText(text, index) {
+        const card = document.getElementById(`card-${index}`);
+        if(card) { const floatEl = document.createElement('div'); floatEl.className = 'float-text'; floatEl.innerText = text; floatEl.style.left = '50%'; floatEl.style.top = '50%'; floatEl.style.transform = 'translate(-50%, -50%)'; card.appendChild(floatEl); setTimeout(() => floatEl.remove(), 1500); }
+    }
+    function showLevelUpEffect() { const overlay = document.getElementById('level-up-overlay'); overlay.style.display = 'flex'; setTimeout(() => overlay.style.display = 'none', 2000); }
+
+    function saveData() { localStorage.setItem('wuxia_class_data', JSON.stringify(students)); showNotify("宗門名冊已保存"); }
+    function resetAll() { showCustomModal({ title: "解散宗門", msg: "確定要燒毀名冊？所有資料將消失。", showCancel: true, onConfirm: () => { localStorage.removeItem('wuxia_class_data'); students = []; renderGrid(); showNotify("一切回歸虛無..."); } }); }
+    function showNotify(msg) { const bar = document.getElementById('notification-bar'); bar.innerText = msg; bar.style.opacity = '1'; setTimeout(() => bar.style.opacity = '0', 3000); }
+</script>
+</body>
+</html>
